@@ -1,168 +1,200 @@
-# INFO-1298 Python
-# Project 1
-# Author: Ian Dube
-# This Program implements a personal book library system.
-from datetime import date
-current_year = date.today().year
+# Coding project by Ian Dube
+# For Funnsies but also efficiency
 
 
-Library = {
-    "1984": {
-        "Author": "George Orwell",
-        "year": 1949,
-        "isbn": "9780451524935"
-},
-    "Dune": {
-        "Author": "Frank Herbert",
-        "year": 1965,
-        "isbn": "9780441172719"
-},
-    "The Hobbit": {
-        "Author": "J.R.R. Tolkien",
-        "year": 1937,
-        "isbn": "9780547928227"
+import netmiko
+import jinja2
+from datetime import datetime
+
+current_time = datetime.now().strftime("%H:%M:%S %d %b %Y")
+
+config = {
+    'switch': {
+        'hostname': '',
+        'clock_set': current_time,
+        'banner_motd': None,
+        'ip_lookup': None,
+        'credentials': {
+            'priv_exec_pw': '',
+            'console_pw': '',
+            'vty_pw': ''
+            },
+        'logging synchronous': None,
+        'vlans': [],
+        'interfaces range': [],
+        'interfaces singular': [],
+        'password_encryption': None,
     },
+    
+    'L3 Switch': {
+        'hostname:': '',
+    }
 }
 
-def add_book(Library, current_year):
-    book_name = input("Please enter the Book name you would like to add: ")
-    if book_name in Library:
-        print("This book is already in the library. ")
-        return
-    elif book_name == "":
-        print("The book name can't be blank.")
-        return
-    else:
-        author = input("What is the Author's name?: ")
-    if author == "":
-        print("The Authors name can't be blank.")
-        return
-    else:
-        pub_year = int(input("What is the publication year?: "))
-    if pub_year <1000 or pub_year > current_year + 1:
-        print("Please enter a valid date.")
-        return
-    else:
-        isbn = int(input("What is the isbn of the book?: "))
-        isbnlength = str(isbn)
-    if len(isbnlength) <10:
-        print("The isbn must be 10 or more")
-        return
-    elif isbnlength =="":
-        print("isbn can't be blank")
-    else:
-        choice = input("Is all this information correct?: \nY/N ")
-    if choice == "Y":
-        Library[book_name] = {
-            "Author": author,
-            "Publication Year": pub_year,
-            "isbn": isbn
-        }
-        print("The book has been added.")
-        return
-    else:
-        print("The book has not been added.")
-        return
-def update_Author(Library):
-    book_title = input("What book would you like to change the author of?: ")
-    if book_title not in Library:
-        print("This book is not in the library.")
-        return
-    else:
-        author_change = input("What is the author you would like to change it to?: ")
-    if author_change == "":
-        print("The author name can't be blank.")
-        return
-    else: 
-        Library[book_title]["Author"] = author_change
-        print("The author has been successfully changed.")
-        return
-def update_year(Library, current_year):
-    book_check = input("What is the book you would like to change?: ")
-    if book_check not in Library:
-        print("The book is not in the library.")
-        return
-    else:
-        year_change = int(input("What year would you like to change it to?: "))
-        if year_change <1000 or year_change > current_year + 1:
-            print("This is not a valid date.")
-            return
-        else:
-            Library[book_check]["year"] = year_change
-            print("The Book's year has been changed.")
-            return
-def title_search(Library):
-    book_search = input("What is the title of the book you would like to search for?: ")
-    if book_search not in Library:
-        print("This book is not in the Library.")
-        return
-    else:
-        print("Here is the Book you were looking for.")
-        print(Library[book_search])
-        return
-def delete_book(Library):
-    book_search = input("What book would you like to delete?: ")
-    if book_search not in Library:
-        print("The book is not in the library or is already deleted.")
-        return
-    else:
-        verification = input("Are you sure you want to delete this book?\n Y/N: ")
-    if verification =="Y":
-        del Library[book_search]
-        print("Book Has been Deleted")
-        return
-    else:
-        print("Deletion Cancelled.")
-        return
-def book_sort(Library):
-    print("Books sorted by title:")
-    for title in sorted(Library):
-        print("Title:", title)
-        print("Author:", Library[title]["Author"])
-        print("year:", Library[title]["year"])
-        print("isbn:", Library[title]["isbn"])
-        print("")
-    return
-        
-
-
-while True:
-    print("Library Menu:")
-    print("1. Add a book")
-    print("2. Update a book’s author")
-    print("3. Update a book’s publication year")
-    print("4. Search for a book by title")
-    print("5. Delete a book")
-    print("6. Display all books (sorted by title)")
-    print("7. Exit")
-
-    user_choice = input("Choose an option (1-7): ")
-
-    if user_choice == "1":
-        add_book(Library, current_year)
-
-    elif user_choice == "2":
-        update_Author(Library)
-
-    elif user_choice == "3":
-        update_year(Library, current_year)
-
-    elif user_choice == "4":
-        title_search(Library)
-
-    elif user_choice == "5":
-        delete_book(Library)
-
-    elif user_choice == "6":
-        book_sort(Library)
+def switch_config(config):
     
-    elif user_choice == "7":
-        verification = input("Are you sure you would like to exit? \nY/N: ")
-        if verification =="Y":
-            print("Thank you for your time.")
+    # Asking for the hostname of the switch
+    while True:
+        hostname = input("What is the hostname of the switch?: ").strip()
+        if hostname == '':
+            print("You cannot have an empty string.").strip()
+            return
+        else: 
+            config['switch']['hostname'] = hostname
+            break
+
+    # Code to Update the clock
+    while True:
+        update_confirm = input("Would you like to update the current time? \ny/n: ").lower()
+        if update_confirm == 'y':
+            current_time = datetime.now().strftime("%H:%M:%S %d %b %Y")
+            print("Updating to current time...")
+            config['switch']['clock_set'] = current_time
+            print(config)
+            break
+        elif update_confirm == 'n':
+            print("Skipping clock update...")
             break
         else:
+            print("Please Input either y/n")
+            continue
+
+    # Code to add a banner motd
+    while True:
+        banner_confirm = input("Would you like to add a banner motd?\n y/n: ").lower()
+        if banner_confirm == 'y':
+            banner_motd = input("What would you like the banner MOTD to be?\nFormat inbetween hashtags #___#\n")
+            config['switch']['banner_motd'] = banner_motd
+            break
+        elif banner_confirm == 'n':
+            print("Skipping banner motd...")
+        else:
+            print("Please enter y/n.")
+            continue
+
+    # Asks for confirmation of Priviledged Exec Password 
+    while True:
+        priv_ask = input("Would you like to have a priviledged EXEC password?\ny/n: ").strip().lower()
+        if priv_ask == 'n':
+            print("Skipping the Priv Exec password...")
+            break
+        elif priv_ask == 'y':
+            priv_exec_pw = input("What would you like the EXEC password to be?: ").strip()
+            config['switch']['credentials']['priv_exec_pw'] = priv_exec_pw
+            break
+        else:
+            print("Please enter either Y or n.")
             continue
     
-    else:
-        print("This is not a valid option, please select a different option.")
+    # Asks for a console password
+    while True:
+        console_ask = input("Would you like to have a console password?\ny/n: ").strip().lower()
+        if console_ask == 'n':
+            print("Skipping the console password...")
+            break
+        elif console_ask == 'y':
+            console_pw = input("What would you like the console password to be?: ").strip()
+            config['switch']['credentials']['console_pw'] = console_pw
+            break
+        else:
+            print("Please enter either Y or N.")
+    
+    # Asks for a VTY line password
+    while True:
+        vty_ask = input("Would you like to have a VTY line password?\ny/n: ").strip().lower()
+        if vty_ask == 'n':
+            print("Skipping the VTY lines password...")
+            break
+        elif vty_ask == 'y':
+            vty_pw = input("What would you like the VTY password to be?: ").strip()
+            config['switch']['credentials']['vty_pw'] = vty_pw
+            break
+        else:
+            print("Please enter either Y or n.")
+            continue
+    
+    # Asks for the vlan count
+    while True:
+        try:
+            number_of_vlans = int(input("Please enter a NUMBER of vlans you would like to create: "))
+            if number_of_vlans < 1:
+                print("Please enter a number above 0.")
+                continue
+            break
+        except ValueError:
+            print("Please enter an integer.")
+   
+    # Collects the vlans
+    vlans = []
+    for i in range(number_of_vlans):
+        while True:
+            try:
+                vlan_id = int(input(f"Please enter the VLAN ID For VLAN # {i+1}: "))
+                break
+            except ValueError:
+                print("Please enter a proper vlan ID")
+        
+        vlan_name = input(f"Please enter a name for VLAN ID {vlan_id}: ")
+        vlan_ip = None
+        vlan_ip_conf = input(f"Would you like to input an IP address for VLAN ID {vlan_id}? \ny/n: ").lower()
+        if vlan_ip_conf == 'n':
+            print("Skipping vlan IP...")   
+        elif vlan_ip_conf == 'y':
+            vlan_ip = input("Please enter the IP address in this format: x.x.x.x x.x.x.x\n")
+        else:
+            print("Please input either Y/n")
+        vlans.append({
+            'vlan_id': vlan_id,
+            'vlan_name': vlan_name,
+            'vlan_ip': vlan_ip
+        })
+        config['switch']['vlans'] = vlans
+
+
+    # Interfaces mode Access 
+    while True:
+        interf_acc_quest = input("Would you like to configure access ports for this switch?\ny/n: ").lower()
+        if interf_acc_quest == 'n':
+            print("Skipping interface access ports...")
+            break
+        elif interf_acc_quest == 'y':
+            port_range_conf = input("Are you configuring a range of ports? or single port? Type: \nrange/single: ")
+            if port_range_conf == 'range':
+                port_start = input("What is the START range of ports you would like to configure? (Format: G1/0/1)")
+                port_end = input("What is the END port you would like to configure? (Format: Single integer: 1)")
+                config['switch']['interfaces range'].append({
+                    'mode': 'access',
+                    'port_start': port_start,
+                    'port_end': port_end
+                })
+            elif port_range_conf == 'single':
+                port_num = input("Please input the singular port number in this format: G1/0/1\n")
+                config['switch']['interfaces singular'].append({
+                    'mode': 'access',
+                    'port_num': port_num
+                })
+        else: 
+            try:
+                print("Please enter a valid option")
+            except: ValueError
+            break
+    
+    
+
+
+def main_menu():
+    while True:
+        print("Networking AutoConfiguration")
+        print("What kind of device are you configuring?")
+        print("1. Switch\n2. L3 Switch\n3. Router")
+        print("4. Print Configurations")
+        print("5. Exit")
+
+        choice = input("Please select an option: ").strip()
+
+        if choice == "1":
+            switch_config(config)
+        
+        elif choice == "4":
+            print(config)
+main_menu()
